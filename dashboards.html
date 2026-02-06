@@ -692,14 +692,32 @@
       const leaves = root.leaves();
       console.log("📦 Nombre de rectangles:", leaves.length);
 
+      // Créer un tooltip SÉPARÉ pour le treemap uniquement
+      const treemapTooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .attr("id", "treemap-tooltip")
+        .style("position", "absolute")
+        .style("background", "rgba(0, 0, 0, 0.95)")
+        .style("color", "#fff")
+        .style("padding", "12px 16px")
+        .style("border-radius", "8px")
+        .style("font-size", "13px")
+        .style("pointer-events", "none")
+        .style("opacity", 0)
+        .style("border", "2px solid #00d2ff")
+        .style("box-shadow", "0 4px 20px rgba(0, 210, 255, 0.4)")
+        .style("z-index", "10000");
+
       const cell = g.selectAll("g")
         .data(leaves)
         .enter()
         .append("g")
         .attr("transform", d => `translate(${d.x0},${d.y0})`);
 
-      // Rectangles avec tooltip corrigé
+      // Rectangles
       cell.append("rect")
+        .attr("class", "treemap-rect")
         .attr("width", d => d.x1 - d.x0)
         .attr("height", d => d.y1 - d.y0)
         .attr("fill", d => {
@@ -711,18 +729,20 @@
         .attr("stroke-width", 2)
         .attr("opacity", 0.85)
         .style("cursor", "pointer")
-        .on("mouseover", function (event, d) {
-          d3.select(this)
-            .attr("opacity", 1)
+        .attr("data-game-name", d => d.data.name)
+        .attr("data-platform-name", d => d.parent.data.name)
+        .attr("data-game-value", d => d.data.value)
+        .on("mouseover", function (event) {
+          const rect = d3.select(this);
+          rect.attr("opacity", 1)
             .attr("stroke", "#00d2ff")
             .attr("stroke-width", 3);
 
-          // CORRECTION: Récupérer le nom de la plateforme et du jeu correctement
-          const platformName = d.parent.data.name;  // Le parent contient la plateforme
-          const gameName = d.data.name;              // Le jeu actuel
-          const gameValue = d.data.value;            // Les ventes du jeu
+          const gameName = rect.attr("data-game-name");
+          const platformName = rect.attr("data-platform-name");
+          const gameValue = parseFloat(rect.attr("data-game-value"));
 
-          tooltip
+          treemapTooltip
             .style("opacity", 1)
             .html(`
               <div style="font-weight: bold; color: #00d2ff; margin-bottom: 5px; font-size: 14px;">
@@ -737,7 +757,7 @@
             `);
         })
         .on("mousemove", function (event) {
-          tooltip
+          treemapTooltip
             .style("left", (event.pageX + 15) + "px")
             .style("top", (event.pageY - 30) + "px");
         })
@@ -747,7 +767,7 @@
             .attr("stroke", "#fff")
             .attr("stroke-width", 2);
 
-          tooltip.style("opacity", 0);
+          treemapTooltip.style("opacity", 0);
         });
 
       // Texte
